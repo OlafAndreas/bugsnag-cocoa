@@ -12,6 +12,7 @@
 #import "Bugsnag.h"
 #import "BugsnagCrashReport.h"
 #import "BugsnagHandledState.h"
+#import "BugsnagCrashSentry.h"
 
 @interface BugsnagCrashReportTests : XCTestCase
 @property BugsnagCrashReport *report;
@@ -194,6 +195,20 @@
     // ignores values if no reserved word used
     addresses[@"r14"] = nil;
     XCTAssertNil([errorReport enhancedErrorMessageForThread:thread]);
+}
+
+- (void)testIsCrashOnLaunch {
+	    BugsnagConfiguration *config = [BugsnagConfiguration new];
+    NSDate *now = [NSDate date];
+
+    XCTAssertTrue([BugsnagCrashSentry isCrashOnLaunch:config currentDate:now]);
+
+    config.launchCrashThresholdMs = 0;
+    XCTAssertFalse([BugsnagCrashSentry isCrashOnLaunch:config currentDate:now]);
+
+    config.launchCrashThresholdMs = 10000;
+    NSDate *date = [now dateByAddingTimeInterval:20];
+    XCTAssertFalse([BugsnagCrashSentry isCrashOnLaunch:config currentDate:date]);
 }
 
 @end
