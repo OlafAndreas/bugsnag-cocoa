@@ -199,7 +199,7 @@
 
 - (void)testIsCrashOnLaunch {
     NSMutableDictionary *dict = [NSMutableDictionary new];
-    NSArray *events = @[@{@"metaData": @{@"appState": dict}}];
+    NSArray *events = @[@{@"appState": dict}];
     BugsnagConfiguration *config = [BugsnagConfiguration new];
     dict[@"duration"] = @100;
     

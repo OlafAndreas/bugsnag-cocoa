@@ -22,10 +22,8 @@
 @end
 
 @interface BugsnagErrorReportApiClient ()
-@property(nonatomic, strong) NSOperationQueue *sendQueue;
-@end
-
-@interface BSGDelayOperation : NSOperation
+@property(nonatomic, strong) NSOperationQueue *backgroundQueue;
+@property(nonatomic, strong) NSOperationQueue *mainQueue;
 @end
 
 @interface BSGDeliveryOperation : NSOperation
@@ -35,16 +33,19 @@
 
 - (instancetype)init {
     if (self = [super init]) {
-        _sendQueue = [NSOperationQueue new];
-        _sendQueue.maxConcurrentOperationCount = 1;
-        if ([_sendQueue respondsToSelector:@selector(qualityOfService)])
-            _sendQueue.qualityOfService = NSQualityOfServiceUtility;
-        _sendQueue.name = @"Bugsnag Delivery Queue";
+        _backgroundQueue = [NSOperationQueue new];
+        _mainQueue = [NSOperationQueue mainQueue];
+        _backgroundQueue.maxConcurrentOperationCount = 1;
+        
+        if ([_backgroundQueue respondsToSelector:@selector(qualityOfService)]) {
+            _backgroundQueue.qualityOfService = NSQualityOfServiceUtility;
+        }
+        _backgroundQueue.name = @"Bugsnag Delivery Queue";
     }
     return self;
 }
 
-- (void)sendPendingReports:(BOOL)synchronous {
+- (void)sendPendingReports {
     @try {
         [[BSG_KSCrash sharedInstance]
          sendAllReportsWithCompletion:^(NSArray *filteredReports,
@@ -65,15 +66,25 @@
               toURL:(NSURL *)url
        onCompletion:(BSG_KSCrashReportFilterCompletion)onCompletion {
     
-    @try { // TODO sync or not?
-        
+    @try {
         NSArray *events = reportData[@"events"];
-        [BugsnagCrashSentry isCrashOnLaunch:[Bugsnag configuration] events:events];
+        BOOL synchronous = [BugsnagCrashSentry isCrashOnLaunch:[Bugsnag configuration] events:events];
         
-        [self sendReportData:reports
-                     payload:reportData
-                       toURL:url
-                onCompletion:onCompletion];
+        if (synchronous) {
+            bsg_log_info(@"Crash during launch period, sending sync");
+            [self sendReportData:reports
+                         payload:reportData
+                           toURL:url
+                    onCompletion:onCompletion];
+        } else {
+            bsg_log_info(@"Sending async");
+            dispatch_async(dispatch_get_global_queue(0, 0), ^{
+                [self sendReportData:reports
+                             payload:reportData
+                               toURL:url
+                        onCompletion:onCompletion];
+            });
+        }
     } @catch (NSException *exception) {
         if (onCompletion) {
             onCompletion(reports, NO,
@@ -136,3 +147,4 @@
 }
 
 @end
+
