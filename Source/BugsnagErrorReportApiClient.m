@@ -34,7 +34,7 @@
     if (self = [super init]) {
         _sendQueue = [NSOperationQueue new];
         _sendQueue.maxConcurrentOperationCount = 1;
-        
+
         if ([_sendQueue respondsToSelector:@selector(qualityOfService)]) {
             _sendQueue.qualityOfService = NSQualityOfServiceUtility;
         }
@@ -63,11 +63,11 @@
             payload:(NSDictionary *)reportData
               toURL:(NSURL *)url
        onCompletion:(BSG_KSCrashReportFilterCompletion)onCompletion {
-    
+
     @try {
         NSArray *events = reportData[@"events"];
         BOOL synchronous = [BugsnagCrashSentry isCrashOnLaunch:[Bugsnag configuration] events:events];
-        
+
         if (synchronous) {
             bsg_log_info(@"Crash during launch period, sending sync");
             [self sendReportData:reports
@@ -76,6 +76,7 @@
                     onCompletion:onCompletion];
         } else {
             bsg_log_info(@"Sending async");
+            [_sendQueue cancelAllOperations];
             [_sendQueue addOperationWithBlock:^{
                 [self sendReportData:reports
                              payload:reportData
@@ -108,13 +109,13 @@
         }
         return;
     }
-    
+
     NSMutableURLRequest *request = [NSMutableURLRequest
                                     requestWithURL:url
                                     cachePolicy:NSURLRequestReloadIgnoringLocalCacheData
                                     timeoutInterval:15];
     request.HTTPMethod = @"POST";
-    
+
     if ([NSURLSession class]) {
         NSURLSession *session = [Bugsnag configuration].session;
         if (!session) {
@@ -149,4 +150,3 @@
 }
 
 @end
-
