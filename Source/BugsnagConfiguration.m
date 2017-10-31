@@ -29,6 +29,7 @@
 #import "BugsnagBreadcrumb.h"
 #import "BugsnagMetaData.h"
 #import "BugsnagNotifier.h"
+#import "BugsnagKeys.h"
 
 @interface Bugsnag ()
 + (BugsnagNotifier *)notifier;
@@ -48,7 +49,7 @@
         _config = [[BugsnagMetaData alloc] init];
         _apiKey = @"";
         _autoNotify = YES;
-        _notifyURL = [NSURL URLWithString:@"https://notify.bugsnag.com/"];
+        _notifyURL = [NSURL URLWithString:BSGDefaultNotifyUrl];
         _beforeNotifyHooks = [NSMutableArray new];
         _beforeSendBlocks = [NSMutableArray new];
         _notifyReleaseStages = nil;
@@ -60,9 +61,9 @@
                                              defaultSessionConfiguration]];
         }
 #if DEBUG
-        _releaseStage = @"development";
+        _releaseStage = BSGKeyDevelopment;
 #else
-        _releaseStage = @"production";
+        _releaseStage = BSGKeyProduction;
 #endif
     }
     return self;
@@ -76,13 +77,13 @@
 - (void)setUser:(NSString *)userId
        withName:(NSString *)userName
        andEmail:(NSString *)userEmail {
-    [self.metaData addAttribute:@"id" withValue:userId toTabWithName:@"user"];
-    [self.metaData addAttribute:@"name"
+    [self.metaData addAttribute:BSGKeyId withValue:userId toTabWithName:BSGKeyUser];
+    [self.metaData addAttribute:BSGKeyName
                       withValue:userName
-                  toTabWithName:@"user"];
-    [self.metaData addAttribute:@"email"
+                  toTabWithName:BSGKeyUser];
+    [self.metaData addAttribute:BSGKeyEmail
                       withValue:userEmail
-                  toTabWithName:@"user"];
+                  toTabWithName:BSGKeyUser];
 }
 
 - (void)addBeforeSendBlock:(BugsnagBeforeSendBlock)block {
@@ -99,18 +100,18 @@
 
 - (void)setReleaseStage:(NSString *)newReleaseStage {
     _releaseStage = newReleaseStage;
-    [self.config addAttribute:@"releaseStage"
+    [self.config addAttribute:BSGKeyReleaseStage
                     withValue:newReleaseStage
-                toTabWithName:@"config"];
+                toTabWithName:BSGKeyConfig];
 }
 
 - (void)setNotifyReleaseStages:(NSArray *)newNotifyReleaseStages;
 {
     NSArray *notifyReleaseStagesCopy = [newNotifyReleaseStages copy];
     _notifyReleaseStages = notifyReleaseStagesCopy;
-    [self.config addAttribute:@"notifyReleaseStages"
+    [self.config addAttribute:BSGKeyNotifyReleaseStages
                     withValue:notifyReleaseStagesCopy
-                toTabWithName:@"config"];
+                toTabWithName:BSGKeyConfig];
 }
 
 - (void)setAutomaticallyCollectBreadcrumbs:
@@ -124,15 +125,15 @@
 
 - (void)setContext:(NSString *)newContext {
     _context = newContext;
-    [self.config addAttribute:@"context"
+    [self.config addAttribute:BSGKeyContext
                     withValue:newContext
-                toTabWithName:@"config"];
+                toTabWithName:BSGKeyConfig];
 }
 
 - (void)setAppVersion:(NSString *)newVersion {
     _appVersion = newVersion;
-    [self.config addAttribute:@"appVersion"
+    [self.config addAttribute:BSGKeyAppVersion
                     withValue:newVersion
-                toTabWithName:@"config"];
+                toTabWithName:BSGKeyConfig];
 }
 @end
