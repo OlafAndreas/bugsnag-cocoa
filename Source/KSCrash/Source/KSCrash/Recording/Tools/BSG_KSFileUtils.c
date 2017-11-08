@@ -41,7 +41,7 @@
  * If the formatted output length would exceed this value, it is truncated.
  */
 #ifndef BSG_KSFU_WriteFmtBufferSize
-#define BSG_KSFU_WriteFmtBufferSize 64
+#define BSG_KSFU_WriteFmtBufferSize 1024
 #endif
 
 #define BUFFER_SIZE 65536
