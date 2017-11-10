@@ -75,10 +75,12 @@ bool bsg_ksfuflushWriteBuffer(const int fd) {
 
 bool bsg_ksfuwriteBytesToFD(const int fd, const char *const bytes,
                             ssize_t length) {
-    
+
     for (ssize_t k = 0; k < length; k++) {
         if (bufferLen >= BUFFER_SIZE) {
-            bsg_ksfuflushWriteBuffer(fd); // flush to disk
+            if (!bsg_ksfuflushWriteBuffer(fd)) {
+                return false;
+            }
         }
         charBuffer[bufferLen] = bytes[k];
         bufferLen++;
